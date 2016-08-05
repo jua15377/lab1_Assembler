@@ -1,7 +1,9 @@
+/* LABORATORIO NO.1*/
 /* José Javier Jo Escobar, 14343*/
 /* Jonnathan Juarez, 15377
 /* Main donde se recaudaran las n4 notas de estudiantes */
 /* Taller de Assembler, Martha L. Naranjo 05/08/2016 */
+/* BIENVENIDOS AL RANDOM NO TAN RANDOM*/
 
 .text
 .align 2
@@ -27,29 +29,29 @@ avg:
 	vldr s20,[r6]
 	vadd.F32 cant cant,s20
 
-	ciclo3:
-			/*Iniciamos el valor del vect*/
+	ciclo1:
+				/*Iniciamos el valor del vect*/
 			vldr s16,[array]
-			/*Sumamos elemento por elemento cada vez que se hace el ciclo*/
+				/*Sumamos elemento por elemento cada vez que se hace el ciclo*/
 			vadd.F32 sumatoria,sumatoria,s16
-			/*Indicamos que la siguiente direccion se direccione en +4 del vector asi lograria avanzar elemento x elem*/
+				/*Indicamos que la siguiente direccion se direccione en +4 del vector asi lograria avanzar elemento x elem*/
 			add array,#4
-			/*Restamos uno al contador*/
+				/*Restamos uno al contador*/
 			sub cont,#1
-			/*Comparamos si ya se recorrio todos los elementow del vecrtor*/
+				/*Comparamos si ya se recorrio todos los elementow del vecrtor*/
 			cmp cont,#0
-			/*sumamos uno al contador de elementos */
+				/*sumamos uno al contador de elementos */
 			vadd.F32 cant,cant,s20
-			/*Cuando se llegue al final del vector direccionamos al final de la subrutina*/
-			beq fin3
-			/*Si no repetimos el ciclo*/
-			b ciclo3
-	fin3:
-			/*Dividimos la sumatoria con la cantidad de elementos del vector obteniendo el promediio*/
+				/*Cuando se llegue al final del vector direccionamos al final de la subrutina*/
+			beq fin1
+				/*Si no repetimos el ciclo*/
+			b ciclo1
+	fin1:
+				/*Dividimos la sumatoria con la cantidad de elementos del vector obteniendo el promediio*/
 			vdiv.F32 prom,sumatoria,cant
-			/*Movemos el primedio a r0*/
+				/*Movemos el primedio a r0*/
 			vmov r0,prom
-			/*Eliminamos la variables localres*/
+				/*Eliminamos la variables localres*/
 			.unreq array
 			.unreq prom
 			.unreq sumatoria
@@ -89,7 +91,7 @@ norm:
 	vldr temp,[r9]
 	vldr temp2,[r9]
 
-	ciclo4:
+	ciclo2:
 		/*Seleccionamos algun valor del array*/
 		vldr actual,[array]
 		/*Restamos el valor obtenido con el minimo*/
@@ -104,9 +106,9 @@ norm:
 		/*Validamos si repetimos el ciclo o terminamos */
 		sub cont,#1
 		cmp cont,#0
-		beq fin4
-		b ciclo4
-	fin4:
+		beq fin2
+		b ciclo2
+	fin2:
 	/*Movemos el arreglo normalizado a r0*/
 		mov r0,array
 		/*Eliminamos variables locales*/
@@ -141,11 +143,11 @@ min:
 	/*Se suma a un registro el dato inicial que se encuentra en el arreglo como un minimo relativo */
 	vldr minultimo,[array]
 
-	ciclo:
+	ciclo3:
 			/*Compara su valor para ver si se llego al final del vector */
 			sub cont,#1
 			cmp cont,#0
-			beq fin
+			beq fin3
 			/*Siguiente valor del arreglo*/
 			add array,#4
 			vldr s16,[array]
@@ -153,12 +155,12 @@ min:
 			vcmp.F32 minultimo,s16
 			vmrs APSR_nzcv,FPSCR
 			/*Si no se repite el ciclo */
-			blt ciclo
+			blt ciclo3
 			/*Si se encuentra un nuevo valor menor se borra el registro con el valor menor anteriormente*/
 			vmov.F32 minultimo,s16
 			/*Repetimos el ciclo para cada uno de los valores */
-			b ciclo
-	fin:
+			b ciclo3
+	fin3:
 		/*Movemos a r0 el valor mas pequeño encontrado en el vector*/
 		vmov r0,minultimo
 		/*Eliminamos el nombre a las variables locales */
@@ -166,7 +168,6 @@ min:
 		.unreq array
 		.unreq cont
 		mov pc,lr
-
 
 
 .text
@@ -185,24 +186,24 @@ max:
 	/*Se agrega al registro el dato inicial del arreglo tomandolo como un maximo relativo */
 	vldr ultimomaximo,[array]
 
-	ciclo2:
+	ciclo4:
 			/*Comparamos el registro para ver si llegamos al final del vector*/
 			sub cont,#1
 			cmp cont,#0
-			beq fin2
-			/*Tomamos el siguiuente valor del arreglo */
+			beq fin4
+			/*Tomams el siguiuente valor del arreglo */
 			add array,#4
 			vldr s16,[array]
 			/*Comparamos si el siguiente valor es mayor que el que esta  */
 			vcmp.F32 ultimomaximo,s16
 			vmrs APSR_nzcv,FPSCR
 			/*Si no, repetimos el ciclo*/
-			blt ciclo2
+			blt ciclo4
 			/*Si encontramos un valor mayor al que estaba en el registro lo borramos el registro con el valor mayor anterior*/
 			vmov.F32 ultimomaximo,s16
 			/*Repetimos el ciclo con cada uno de los datos.*/
-			b ciclo2
-	fin2:
+			b ciclo4
+	fin4:
 		/*Instanciamos r0 con el valor mas grande encontrado en el vector*/
 		vmov r0,ultimomaximo
 		/*Eliminamos las variables locales */
@@ -211,3 +212,56 @@ max:
 		.unreq cont
 		mov pc,lr
 
+
+.text
+.align 2
+.global printVec
+/*Subrutina que se encarga de imprimir todos los elementos de un vector*/
+printVec:
+	/*Movemos la direccion del arreglo a r8*/
+	mov r8,r0
+	/*Variables locales*/
+	array .req r8
+	cont .req r5
+	valor .req s14
+	valorDoble .req D5
+	/*Inicializamos los regiustros*/
+	ldr r3,=inici
+	vldr valor,[r3]
+	ldr valorDoble,[r3]
+	ldr cont,[r1]
+	/*Mostramos en pantalla una cadena donde se explica que se mostraran los datos del vector normalizado*/
+	push {lr}
+	ldr r0,=expli
+	bl puts
+	pop {lr}
+
+	ciclo5:
+		push {lr}
+		/*el ciclo recorre el vector elemento por elemnto y lo muestra*/
+		ldr r10,[array]
+		vmov valor,r10
+		vcvt.F64.F32 valorDoble,valor
+		vmov r2,r3,valorDoble
+		ldr r0,=format
+		bl printf
+		pop {lr}
+		/*Summamos 4 bits para movernos a la siguiente casilla del vector en cada vuelta del ciclo*/
+		add array,#4
+		/*Verificamos si repetimos elc ciclo o terminamos */
+		sub cont,#1
+		cmp cont,#0
+		beq fin5
+		b ciclo5
+	fin5:
+		/*Eliminamos vairables locales*/
+		.unreq cont
+		.unreq array
+		.unreq valor
+		.unreq valorDoble
+		mov pc,lr
+.data
+.align 2
+expli: .asciz "Estos son los valores del vector ya normalizado: \n"
+format: .asciz "%f \n"
+inici: .float 0.0
