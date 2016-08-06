@@ -1,267 +1,100 @@
 /* LABORATORIO NO.1*/
 /* José Javier Jo Escobar, 14343*/
-/* Jonnathan Juarez, 15377
-/* Main donde se recaudaran las n4 notas de estudiantes */
+/* Jonnathan A. Juarez, 15377
+/* subrutina para la generacion de numeros aleatorios */
 /* Taller de Assembler, Martha L. Naranjo 05/08/2016 */
-/* BIENVENIDOS AL RANDOM NO TAN RANDOM*/
 
-.text
-.align 2
-.global avg
-/*Metodo que calcula el promedio del vector en float */
-avg:
-	/*Movemos la direccion del arreglo a r8*/
-	mov r8,r0
-	/*Variables locales*/
-	array .req r8
-	prom .req s14
-	cont .req r5
-	sumatoria .req s16
-	cant .req s18
-	/*Inicializamos los registros en 0.0 para generar el float*/
-	ldr r7,=ini
-	vldr sumatoria,[r7]
-	vldr prom,[r7]
-	/*Inicializamos el caontador dependiendo a la cantidad de elementos del vectore*/
-	ldr cont,[r1]
-	/*Inicializamos el contador de elementos del vector*/
-	ldr r6,=num
-	vldr s20,[r6]
-	vadd.F32 cant cant,s20
+.global lfsr,printVec,min,max
+/*------------LFSR---------------*/
+lfsr:
+	@guardar punto de regreso
+	push {lr}
+	@copiando tamanio a r3
+	mov r3, r1 
+	/* forma de trabajar los registros
+	lfs = r2
+	lsb = r1
+	tamanio = r3 
+	toggle_mask = r5
+	contador = r6
+	*/
+	ldr r5, =0x80200003
+	mov r6, #0
 
-	ciclo1:
-				/*Iniciamos el valor del vect*/
-			vldr s16,[array]
-				/*Sumamos elemento por elemento cada vez que se hace el ciclo*/
-			vadd.F32 sumatoria,sumatoria,s16
-				/*Indicamos que la siguiente direccion se direccione en +4 del vector asi lograria avanzar elemento x elem*/
-			add array,#4
-				/*Restamos uno al contador*/
-			sub cont,#1
-				/*Comparamos si ya se recorrio todos los elementow del vecrtor*/
-			cmp cont,#0
-				/*sumamos uno al contador de elementos */
-			vadd.F32 cant,cant,s20
-				/*Cuando se llegue al final del vector direccionamos al final de la subrutina*/
-			beq fin1
-				/*Si no repetimos el ciclo*/
-			b ciclo1
-	fin1:
-				/*Dividimos la sumatoria con la cantidad de elementos del vector obteniendo el promediio*/
-			vdiv.F32 prom,sumatoria,cant
-				/*Movemos el primedio a r0*/
-			vmov r0,prom
-				/*Eliminamos la variables localres*/
-			.unreq array
-			.unreq prom
-			.unreq sumatoria
-			.unreq cont
-			.unreq cant
-			mov pc,lr
+ciclo:
+	add r6, #1
+	and r1, r2, #0b1 @ Obtener el bit menos significativo
+	cmp r1, #0 @ comparar si el bit menos significativo es 1 o 0
+	lsr r2, r2, #1 @ Correr el lfsr a la derecha 1 pos
+	eorne r2, r2, r5 @ Aplicar la mascara de XOR
+	vmov s0, r2
+	vcvt.f32.s32 s0, s0
+	vstr s0, [r0] @ Guardar el valor generado
+	add r0, #4
+	cmp r3, r6
+	bne ciclo
 
-.data
-.align 2
-/*inicializamos los registros*/
-ini: .float 0.0
-num: .float 1.0
-
-.text
-.align 2
-.global norm
-/*Metodo qie normaliza los elementos de un vector float */
-norm:
-	/*Movemos a r8 las direcciones del arreglo*/
-	mov r8,r0
-	/*Variables locales*/
-	minimo .req s18
-	maximo .req s20
-	array .req r8
-	normalizado .req s14
-	cont .req r5
-	actual .req s16
-	temp .req s22
-	temp2 .req s24
-
-	/*Inicializamos el contador valor maximo y minimo del vector*/
-	ldr cont,[r1]
-	vmov minimo,r2
-	vmov maximo,r3
-	ldr r9,=inic
-	/*Iniciamos las Var temporales*/
-	vldr temp,[r9]
-	vldr temp2,[r9]
-
-	ciclo2:
-		/*Seleccionamos algun valor del array*/
-		vldr actual,[array]
-		/*Restamos el valor obtenido con el minimo*/
-		vsub.F32 temp,actual,minimo
-		/*Restamos el maximo y el minimos*/
-		vsub.F32 temp2,maximo,minimo
-		/*Dividimos los resultados anteriores*/
-		vdiv.F32 normalizado,temp,temp2
-		/*Guardamos en el vector el resultado normalizado*/
-		vstr normalizado,[array]
-		add array,#4
-		/*Validamos si repetimos el ciclo o terminamos */
-		sub cont,#1
-		cmp cont,#0
-		beq fin2
-		b ciclo2
-	fin2:
-	/*Movemos el arreglo normalizado a r0*/
-		mov r0,array
-		/*Eliminamos variables locales*/
-		.unreq array
-		.unreq minimo
-		.unreq maximo
-		.unreq cont
-		.unreq actual
-		.unreq normalizado
-		.unreq temp
-		.unreq temp2
-		mov pc,lr
-.data
-.align 2
-/*Valor de inicializacion en 0.0*/
-inic: .float 0.0
-
-.text
-.align 2
-.global min
-/*Metodo que realiza el calculo del valor minimo de un vector punto flotante. */
+	@ Regresar de la subrutina
+	pop {lr}
+	mov pc, lr
 
 min:
-	/*Almacenamos en r8 la direccion del array */
-	mov r8,r0
-	/*Variables locales*/
-	array .req r8
-	minultimo .req s14
-	cont .req r5
-	/*Se le suma al contador la cantidad de elementos del arreglo*/
-	mov cont,r1
-	/*Se suma a un registro el dato inicial que se encuentra en el arreglo como un minimo relativo */
-	vldr minultimo,[array]
-
-	ciclo3:
-			/*Compara su valor para ver si se llego al final del vector */
-			sub cont,#1
-			cmp cont,#0
-			beq fin3
-			/*Siguiente valor del arreglo*/
-			add array,#4
-			vldr s16,[array]
-			/*Comparamos si el siguiente valor es menor al valor presente al valor actual del arreglo */
-			vcmp.F32 minultimo,s16
-			vmrs APSR_nzcv,FPSCR
-			/*Si no se repite el ciclo */
-			blt ciclo3
-			/*Si se encuentra un nuevo valor menor se borra el registro con el valor menor anteriormente*/
-			vmov.F32 minultimo,s16
-			/*Repetimos el ciclo para cada uno de los valores */
-			b ciclo3
-	fin3:
-		/*Movemos a r0 el valor mas pequeño encontrado en el vector*/
-		vmov r0,minultimo
-		/*Eliminamos el nombre a las variables locales */
-		.unreq minultimo
-		.unreq array
-		.unreq cont
-		mov pc,lr
-
-
-.text
-.align 2
-.global max
-/*Metodo que calcula el maximo valor que se encuentre en un vector de punto flotante*/
-max:
-	/*Movemos a r8 la direccion del arreglo */
-	mov r8,r0
-	/*Variables locales */
-	array .req r8
-	ultimomaximo .req s14
-	cont .req r5
-	/*Se le suma al contador la cantidad de datos del arreglo */
-	mov cont,r1
-	/*Se agrega al registro el dato inicial del arreglo tomandolo como un maximo relativo */
-	vldr ultimomaximo,[array]
-
-	ciclo4:
-			/*Comparamos el registro para ver si llegamos al final del vector*/
-			sub cont,#1
-			cmp cont,#0
-			beq fin4
-			/*Tomams el siguiuente valor del arreglo */
-			add array,#4
-			vldr s16,[array]
-			/*Comparamos si el siguiente valor es mayor que el que esta  */
-			vcmp.F32 ultimomaximo,s16
-			vmrs APSR_nzcv,FPSCR
-			/*Si no, repetimos el ciclo*/
-			blt ciclo4
-			/*Si encontramos un valor mayor al que estaba en el registro lo borramos el registro con el valor mayor anterior*/
-			vmov.F32 ultimomaximo,s16
-			/*Repetimos el ciclo con cada uno de los datos.*/
-			b ciclo4
-	fin4:
-		/*Instanciamos r0 con el valor mas grande encontrado en el vector*/
-		vmov r0,ultimomaximo
-		/*Eliminamos las variables locales */
-		.unreq ultimomaximo
-		.unreq array
-		.unreq cont
-		mov pc,lr
-
-
-.text
-.align 2
-.global printVec
-/*Subrutina que se encarga de imprimir todos los elementos de un vector*/
-printVec:
-	/*Movemos la direccion del arreglo a r8*/
-	mov r8,r0
-	/*Variables locales*/
-	array .req r8
-	cont .req r5
-	valor .req s14
-	valorDoble .req D5
-	/*Inicializamos los regiustros*/
-	ldr r3,=inici
-	vldr valor,[r3]
-	ldr valorDoble,[r3]
-	ldr cont,[r1]
-	/*Mostramos en pantalla una cadena donde se explica que se mostraran los datos del vector normalizado*/
 	push {lr}
-	ldr r0,=expli
-	bl puts
+	vldr s1, [r0]
+	mov r2, #0
+cicloMin:
+	vldr s0, [r0]
+	add r0, #4
+	@ Compara si es menor
+	vcmp.f32 s0, s1 
+	vmrs APSR_nzcv, FPSCR @ Transferir banderas
+	vmovlt s1, s0 @ Si es menor realizar cambio
+	add r2, #1
+	cmp r2, r1
+	bne cicloMin
+	vmov r0, s1
+	@ Salida Subrutina
 	pop {lr}
+	mov pc, lr
 
-	ciclo5:
+
+max:
+	push {lr}
+	vldr s1, [r0]
+	mov r2, #0
+cicloMax:
+	vldr s0, [r0]
+	add r0, #4
+	vcmp.f32 s0, s1
+	vmrs APSR_nzcv, FPSCR @ Transferir banderas
+	vmovgt s1, s0 @ Si es mayor cambiar valor
+	add r2, #1 
+	cmp r2, r1
+	bne cicloMax
+	vmov r0, s1
+	@ Salida subrutina
+	pop {lr}
+	mov pc, lr
+
+printVec:
 		push {lr}
-		/*el ciclo recorre el vector elemento por elemnto y lo muestra*/
-		ldr r10,[array]
-		vmov valor,r10
-		vcvt.F64.F32 valorDoble,valor
-		vmov r2,r3,valorDoble
-		ldr r0,=format
-		bl printf
+		mov r4, #0
+		mov r5, r0
+	imprimir:	
+		cmp r4, r1 @ Comparar con el tamanio
+		beq salir
+		vldr s0, [r5]
+		add r5, #4
+		@preparando para impresion
+		vcvt.f64.f32 d1, s0
+		vmov r2, r3, d1
+		ldr r0, =frmFloat
+		push {r0-r5}
+		bl printf @ Imprimir valores
+		pop {r0-r5}
+		add r4, #1
+		b imprimir
+	@salida de la subrutina
+	salir:
 		pop {lr}
-		/*Summamos 4 bits para movernos a la siguiente casilla del vector en cada vuelta del ciclo*/
-		add array,#4
-		/*Verificamos si repetimos elc ciclo o terminamos */
-		sub cont,#1
-		cmp cont,#0
-		beq fin5
-		b ciclo5
-	fin5:
-		/*Eliminamos vairables locales*/
-		.unreq cont
-		.unreq array
-		.unreq valor
-		.unreq valorDoble
-		mov pc,lr
-.data
-.align 2
-expli: .asciz "Estos son los valores del vector ya normalizado: \n"
-format: .asciz "%f \n"
-inici: .float 0.0
+		mov pc, lr
